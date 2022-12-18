@@ -82,33 +82,34 @@ class testSpider(scrapy.Spider):
                 if any(word in postedTimeAgo for word in ['day','days']):
                     postedTimeAgo = int(postedTimeAgo.replace("day ago",'')\
                     .replace("days ago",'').strip())*24
-                    
-        noApplicants = response.css('.num-applicants__caption::text').get()\
-            .strip().lower()
-        if 'among' in noApplicants:
-            noApplicants = 0
-        else:
-            noApplicants = int(noApplicants.replace("applicants",'')\
-                .replace("over",''))   
+        
+        if postedTimeAgo <= 1:            
+            noApplicants = response.css('.num-applicants__caption::text').get()\
+                .strip().lower()
+            if 'among' in noApplicants:
+                noApplicants = 0
+            else:
+                noApplicants = int(noApplicants.replace("applicants",'')\
+                    .replace("over",''))   
+                
+            appsPerHr = noApplicants/postedTimeAgo
+            clean_desc = " ".join(response\
+                .css('div.show-more-less-html__markup ::text')\
+                .extract()).strip().lower()  
+            clean_title = response.css('h1.topcard__title::text').get().strip()\
+                .lower()
+            clean_company = response.css('a.topcard__org-name-link::text').get()\
+                .strip().lower()
+            clean_type_of_job = response\
+                .css('span.description__job-criteria-text::text').get().strip()\
+                .lower()
+            job_link = response.request.url
+            job_id = int(re.findall("\d{10}",job_link)[0])
             
-        appsPerHr = noApplicants/postedTimeAgo
-        clean_desc = " ".join(response\
-            .css('div.show-more-less-html__markup ::text')\
-            .extract()).strip().lower()  
-        clean_title = response.css('h1.topcard__title::text').get().strip()\
-            .lower()
-        clean_company = response.css('a.topcard__org-name-link::text').get()\
-            .strip().lower()
-        clean_type_of_job = response\
-            .css('span.description__job-criteria-text::text').get().strip()\
-            .lower()
-        job_link = response.request.url
-        job_id = int(re.findall("\d{10}",job_link)[0])
-        
-        
-        yield {'title': clean_title, 'appsPerHour': appsPerHr, #'dateTime': self.dateTime,
-               'noApplicants': noApplicants,'postedTimeAgo':postedTimeAgo,
-                'company': clean_company,'job_link': job_link,
-                'description': clean_desc, 'typeOfJob': clean_type_of_job,
-                'job_id': job_id
-                }
+            
+            yield {'title': clean_title, 'appsPerHour': appsPerHr, #'dateTime': self.dateTime,
+                'noApplicants': noApplicants,'postedTimeAgo':postedTimeAgo,
+                    'company': clean_company,'job_link': job_link,
+                    'description': clean_desc, 'typeOfJob': clean_type_of_job,
+                    'job_id': job_id
+                    }
